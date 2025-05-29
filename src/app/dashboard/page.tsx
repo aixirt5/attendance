@@ -555,6 +555,15 @@ export default function DashboardPage() {
             <div className="flex items-center space-x-4">
               <span className="text-blue-200/70">Welcome, {username}</span>
               <button
+                onClick={handleLogout}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-200 glass-morphism rounded-lg border border-red-500/20 hover:border-red-500/40 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Logout
+              </button>
+              <button
                 onClick={() => setIsAddingNew(true)}
                 className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600/80 rounded-lg hover:bg-blue-500/80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
               >
