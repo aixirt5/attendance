@@ -48,42 +48,42 @@ export default function AttendanceTable({
       <div className="overflow-x-auto glass-morphism rounded-lg p-4">
         <div className="hidden md:block">
           {/* Desktop loading skeleton */}
-          <table className="min-w-full divide-y divide-blue-500/20">
-            <thead>
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Overtime</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Job Order</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Destination</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Details</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Actions</th>
+        <table className="min-w-full divide-y divide-blue-500/20">
+          <thead>
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Date</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Overtime</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Job Order</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Destination</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Details</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-blue-200 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-blue-500/20">
+            {[1, 2, 3].map((_, index) => (
+              <tr key={index} className="animate-pulse">
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-24"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-16"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-20"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-32"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-24"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-16"></div>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-blue-500/20">
-              {[1, 2, 3].map((_, index) => (
-                <tr key={index} className="animate-pulse">
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-24"></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-16"></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-20"></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-32"></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-24"></div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="h-4 bg-blue-500/20 rounded w-16"></div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            ))}
+          </tbody>
+        </table>
         </div>
         <div className="md:hidden space-y-4">
           {/* Mobile loading skeleton */}
@@ -346,7 +346,7 @@ export default function AttendanceTable({
           {sortedRecords.map(record => (
             <MobileCard key={record.id} record={record} />
           ))}
-          {sortedRecords.length === 0 && (
+      {sortedRecords.length === 0 && (
             <div className="text-center py-8">
               <div className="inline-flex flex-col items-center text-blue-200/70">
                 <svg className="w-12 h-12 mb-3 text-blue-300/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
