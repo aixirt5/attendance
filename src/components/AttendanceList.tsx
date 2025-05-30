@@ -106,7 +106,7 @@ export default function AttendanceList({ onView, onDelete }: AttendanceListProps
             {records.map((record) => (
               <tr key={record.id} className="hover:bg-blue-500/10">
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">
-                  {format(new Date(record.date), 'MMM dd, yyyy')}
+                  {format(new Date(record.date), 'MMM-d-yy')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-200">
                   {record.overtime || '-'}

@@ -186,49 +186,59 @@ export default function DashboardPage() {
     try {
       setIsExporting(true)
       
-      // Create new PDF document - use landscape for better fit
+      // Create new PDF document - use portrait for A4
       const doc = new jsPDF({
-        orientation: 'landscape',
+        orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       })
 
       const pageWidth = doc.internal.pageSize.getWidth()
       const pageHeight = doc.internal.pageSize.getHeight()
-      const margin = 15
+      const margin = 10
 
       // Add top decorative lines
       doc.setDrawColor(10, 25, 47)
-      doc.setLineWidth(0.8)
-      doc.line(margin, 10, pageWidth - margin, 10)
-      doc.line(margin, 12, pageWidth - margin, 12)
+      doc.setLineWidth(0.5)
+      doc.line(margin, 8, pageWidth - margin, 8)
+      doc.line(margin, 9, pageWidth - margin, 9)
       
       // Add main title centered with enhanced styling
-      doc.setFontSize(32) // Increased font size
+      doc.setFontSize(16) // Reduced font size for portrait
       doc.setFont('helvetica', 'bold')
       const title = 'ATTENDANCE MONITORING'
       const titleWidth = doc.getStringUnitWidth(title) * doc.getFontSize() / doc.internal.scaleFactor
       const titleX = (pageWidth - titleWidth) / 2
-      doc.text(title, titleX, 30)
+      doc.text(title, titleX, 20)
 
       // Add decorative lines under title
       doc.setDrawColor(10, 25, 47)
-      doc.setLineWidth(0.5)
-      doc.line(titleX - 10, 34, titleX + titleWidth + 10, 34)
-      doc.line(titleX - 10, 35, titleX + titleWidth + 10, 35)
+      doc.setLineWidth(0.3)
+      doc.line(titleX - 10, 22, titleX + titleWidth + 10, 22)
+      doc.line(titleX - 10, 23, titleX + titleWidth + 10, 23)
 
       // Add cut-off date with enhanced styling
-      doc.setFontSize(16) // Increased font size for cut-off date
+      doc.setFontSize(10) // Reduced font size for portrait
       doc.setFont('helvetica', 'bold')
-      const cutOffText = `Cut-off Date : ${dateRange.fromDate} - ${dateRange.toDate}`
+      const fromDate = dateRange.fromDate ? new Date(dateRange.fromDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) : ''
+      const toDate = dateRange.toDate ? new Date(dateRange.toDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }) : ''
+      const cutOffText = `Cut-off Date : ${fromDate} - ${toDate}`
       const cutOffWidth = doc.getStringUnitWidth(cutOffText) * doc.getFontSize() / doc.internal.scaleFactor
       const cutOffX = (pageWidth - cutOffWidth) / 2
-      doc.text(cutOffText, cutOffX, 45)
+      doc.text(cutOffText, cutOffX, 30)
 
       // Add underline for cut-off date
       doc.setDrawColor(10, 25, 47)
       doc.setLineWidth(0.3)
-      doc.line(cutOffX - 5, 47, cutOffX + cutOffWidth + 5, 47)
+      doc.line(cutOffX - 5, 32, cutOffX + cutOffWidth + 5, 32)
 
       // Sort and format records
       const sortedRecords = [...records].sort((a, b) => {
@@ -399,96 +409,142 @@ export default function DashboardPage() {
         }
       ])
 
-      // Generate the table with improved styling
+      // Get the last record for prepared_by and checked_by
+      const lastRecord = sortedRecords[sortedRecords.length - 1]
+      const preparedBy = lastRecord?.prepared_by?.toUpperCase() || ''
+      const checkedBy = lastRecord?.checked_by?.toUpperCase() || ''
+
+      // Add Prepared by row
+      tableData.push([
+        { 
+          content: preparedBy, 
+          styles: { 
+            fontStyle: 'normal',
+            halign: 'center',
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: checkedBy, 
+          styles: { 
+            fontStyle: 'normal',
+            halign: 'center',
+            valign: 'middle'
+          } 
+        }
+      ])
+
+      // Add labels row
+      tableData.push([
+        { 
+          content: 'Prepared by:', 
+          styles: { 
+            fontStyle: 'normal',
+            halign: 'center',
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: '', 
+          styles: { 
+            valign: 'middle'
+          } 
+        },
+        { 
+          content: 'Checked By:', 
+          styles: { 
+            fontStyle: 'normal',
+            halign: 'center',
+            valign: 'middle'
+          } 
+        }
+      ])
+
+      // Generate the table with improved styling for portrait
       autoTable(doc, {
-        startY: 55,
+        startY: 40,
         head: [[
-          { content: 'DATE', styles: { halign: 'center', fontSize: 12 } as UserOptions['styles'] },
-          { content: 'O.T', styles: { halign: 'center', fontSize: 12 } as UserOptions['styles'] },
-          { content: 'J.O. No.', styles: { halign: 'center', fontSize: 12 } as UserOptions['styles'] },
-          { content: 'Destination', styles: { halign: 'center', fontSize: 12 } as UserOptions['styles'] },
-          { content: 'REMARK', styles: { halign: 'center', fontSize: 12 } as UserOptions['styles'] }
+          { content: 'DATE', styles: { halign: 'center', fontSize: 8 } as UserOptions['styles'] },
+          { content: 'O.T', styles: { halign: 'center', fontSize: 8 } as UserOptions['styles'] },
+          { content: 'J.O. No.', styles: { halign: 'center', fontSize: 8 } as UserOptions['styles'] },
+          { content: 'Destination', styles: { halign: 'center', fontSize: 8 } as UserOptions['styles'] },
+          { content: 'REMARK', styles: { halign: 'center', fontSize: 8 } as UserOptions['styles'] }
         ]],
         body: tableData as CellInput[][],
         headStyles: {
           fillColor: [10, 25, 47],
           textColor: [255, 255, 255],
           fontStyle: 'bold',
-          fontSize: 12,
-          lineWidth: 0.5,
+          fontSize: 8,
+          lineWidth: 0.3,
           lineColor: [0, 0, 0],
           halign: 'center',
           valign: 'middle',
-          cellPadding: 5
+          cellPadding: 2
         },
         bodyStyles: {
           lineColor: [0, 0, 0],
-          lineWidth: 0.3,
-          fontSize: 11,
-          cellPadding: 4,
-          valign: 'middle'
-        },
-        didDrawCell: function(data) {
-          // Add vertical borders only between columns
-          const { column, row } = data
-          if (column.index < 4) {
-            const x = data.cell.x + data.cell.width
-            const y1 = data.cell.y
-            const y2 = y1 + data.cell.height
-            doc.line(x, y1, x, y2)
-          }
+          lineWidth: 0.2,
+          fontSize: 8,
+          cellPadding: 2,
+          valign: 'middle',
+          minCellHeight: 5
         },
         columnStyles: {
-          0: { cellWidth: 65 }, // DATE
-          1: { cellWidth: 20 }, // O.T
-          2: { cellWidth: 30 }, // J.O. No.
-          3: { cellWidth: 75 }, // Destination
-          4: { cellWidth: 75 } // REMARK
+          0: { cellWidth: 30 }, // DATE
+          1: { cellWidth: 15 }, // O.T
+          2: { cellWidth: 20 }, // J.O. No.
+          3: { cellWidth: 55 }, // Destination
+          4: { cellWidth: 55 } // REMARK
         },
         alternateRowStyles: {
           fillColor: [248, 250, 252]
         },
         styles: {
-          cellPadding: 5,
-          fontSize: 10,
+          fontSize: 8,
           lineColor: [0, 0, 0],
-          lineWidth: 0.3,
-          overflow: 'linebreak'
+          lineWidth: 0.2,
+          overflow: 'linebreak',
+          cellPadding: 2
         },
+        margin: { left: margin, right: margin },
         theme: 'grid',
         didDrawPage: function(data: any) {
           if (data.cursor) {
-            // Add footer with improved styling
-            const finalY = data.cursor.y + 25
-            
-            // Decorative lines above signatures
-            doc.setDrawColor(10, 25, 47)
-            doc.setLineWidth(0.3)
-            doc.line(margin, finalY - 5, pageWidth - margin, finalY - 5)
-            
-            // Signature section
-            doc.setFontSize(11)
-            doc.setFont('helvetica', 'bold')
-            doc.text('Prepared by:', margin, finalY + 5)
-            doc.text('Checked By:', pageWidth - margin - 50, finalY + 5)
-            
-            // Signature lines
-            doc.setDrawColor(100, 100, 100)
-            doc.setLineWidth(0.5)
-            doc.line(margin, finalY + 20, margin + 60, finalY + 20)
-            doc.line(pageWidth - margin - 60, finalY + 20, pageWidth - margin, finalY + 20)
-            
-            // Add names
-            doc.setFontSize(10)
-            doc.setFont('helvetica', 'normal')
-            if (username) {
-              doc.text(username.toUpperCase(), margin, finalY + 25)
-            }
-
             // Add decorative bottom line
             doc.setDrawColor(10, 25, 47)
             doc.setLineWidth(0.3)
-            doc.line(margin, pageHeight - 10, pageWidth - margin, pageHeight - 10)
+            doc.line(margin, pageHeight - 5, pageWidth - margin, pageHeight - 5)
           }
         }
       })

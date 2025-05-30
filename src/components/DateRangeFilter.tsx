@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import type { DateRange } from '@/lib/supabase'
+import { formatDateRange } from '@/lib/dateUtils'
 
 interface DateRangeFilterProps {
   onChange: (dateRange: DateRange) => void
@@ -155,7 +156,7 @@ export default function DateRangeFilter({ onChange }: DateRangeFilterProps) {
             <span>Showing records from</span>
           </div>
           <div className="font-medium text-blue-200">
-            {new Date(fromDate).toLocaleDateString()} - {new Date(toDate).toLocaleDateString()}
+            {formatDateRange(fromDate, toDate)}
           </div>
         </div>
       </div>
