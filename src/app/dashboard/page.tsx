@@ -47,11 +47,15 @@ export default function DashboardPage() {
   const [records, setRecords] = useState<AttendanceRecord[]>([])
   const [initialLoading, setInitialLoading] = useState(true)
   const [isFilterLoading, setIsFilterLoading] = useState(false)
+  const [isPaginationLoading, setIsPaginationLoading] = useState(false)
   const [isAddingNew, setIsAddingNew] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [username, setUsername] = useState<string>('')
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange())
   const [isExporting, setIsExporting] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalRecords, setTotalRecords] = useState(0)
+  const pageSize = 10
 
   // Generate particles
   useEffect(() => {
@@ -79,13 +83,7 @@ export default function DashboardPage() {
     }
   }, [])
 
-  const fetchRecords = useCallback(async (dateRange?: DateRange, isFiltering = false) => {
-    if (isFiltering) {
-      setIsFilterLoading(true)
-    } else {
-      setInitialLoading(true)
-    }
-
+  const fetchRecords = useCallback(async (page: number = 1, dateRange?: DateRange, isFiltering = false) => {
     try {
       const url = localStorage.getItem('attendanceDbUrl')
       const key = localStorage.getItem('attendanceDbKey')
@@ -97,33 +95,64 @@ export default function DashboardPage() {
       }
 
       const client = createAttendanceClient(url, key)
-      const { data } = await getAttendanceRecords(client, 1, 10, dateRange)
+      const { data, count } = await getAttendanceRecords(client, page, pageSize, dateRange)
+      
       setRecords(data || [])
+      setTotalRecords(count)
     } catch (error: any) {
-      console.error('Dashboard initialization error:', error)
-      toast.error(error.message || 'Failed to load attendance records')
-      setRecords([])
-    } finally {
-      setInitialLoading(false)
-      setIsFilterLoading(false)
+      console.error('Fetch records error:', error)
+      toast.error(error.message || 'Failed to load records')
     }
   }, [router])
 
-  // Initial load
+  // Initial load - only on mount
   useEffect(() => {
-    fetchRecords()
-  }, [fetchRecords])
+    const loadInitialData = async () => {
+      setInitialLoading(true)
+      await fetchRecords(1, dateRange)
+      setInitialLoading(false)
+    }
+    loadInitialData()
+  }, []) // Intentionally empty dependencies
 
   // Handle date range changes
-  useEffect(() => {
-    if (Object.keys(dateRange).length > 0) {
-      fetchRecords(dateRange, true)
-    }
-  }, [dateRange, fetchRecords])
-
   const handleDateRangeChange = useCallback((newDateRange: DateRange) => {
+    setIsFilterLoading(true)
     setDateRange(newDateRange)
-  }, [])
+    setCurrentPage(1) // Reset to first page when filter changes
+    fetchRecords(1, newDateRange, true).finally(() => {
+      setIsFilterLoading(false)
+    })
+  }, [fetchRecords])
+
+  // Handle page changes
+  const handlePageChange = useCallback(async (newPage: number) => {
+    if (newPage === currentPage) return
+    
+    try {
+      setIsPaginationLoading(true)
+      const url = localStorage.getItem('attendanceDbUrl')
+      const key = localStorage.getItem('attendanceDbKey')
+      
+      if (!url || !key) {
+        toast.error('Please log in again')
+        router.push('/')
+        return
+      }
+
+      const client = createAttendanceClient(url, key)
+      const { data, count } = await getAttendanceRecords(client, newPage, pageSize, dateRange)
+      
+      setCurrentPage(newPage)
+      setRecords(data || [])
+      setTotalRecords(count)
+    } catch (error: any) {
+      console.error('Pagination error:', error)
+      toast.error(error.message || 'Failed to load page')
+    } finally {
+      setIsPaginationLoading(false)
+    }
+  }, [currentPage, router, dateRange])
 
   const handleAddNew = useCallback(async (data: Partial<AttendanceRecord>) => {
     setIsSubmitting(true)
@@ -186,6 +215,25 @@ export default function DashboardPage() {
     try {
       setIsExporting(true)
       
+      // First, fetch all records for the date range
+      const url = localStorage.getItem('attendanceDbUrl')
+      const key = localStorage.getItem('attendanceDbKey')
+      
+      if (!url || !key) {
+        toast.error('Please log in again')
+        router.push('/')
+        return
+      }
+
+      const client = createAttendanceClient(url, key)
+      // Fetch all records by setting a large pageSize
+      const { data: allRecords } = await getAttendanceRecords(client, 1, 1000, dateRange)
+      
+      if (!allRecords || allRecords.length === 0) {
+        toast.error('No records to export')
+        return
+      }
+
       // Create new PDF document - use portrait for A4
       const doc = new jsPDF({
         orientation: 'portrait',
@@ -204,7 +252,7 @@ export default function DashboardPage() {
       doc.line(margin, 9, pageWidth - margin, 9)
       
       // Add main title centered with enhanced styling
-      doc.setFontSize(16) // Reduced font size for portrait
+      doc.setFontSize(16)
       doc.setFont('helvetica', 'bold')
       const title = 'ATTENDANCE MONITORING'
       const titleWidth = doc.getStringUnitWidth(title) * doc.getFontSize() / doc.internal.scaleFactor
@@ -218,7 +266,7 @@ export default function DashboardPage() {
       doc.line(titleX - 10, 23, titleX + titleWidth + 10, 23)
 
       // Add cut-off date with enhanced styling
-      doc.setFontSize(10) // Reduced font size for portrait
+      doc.setFontSize(10)
       doc.setFont('helvetica', 'bold')
       const fromDate = dateRange.fromDate ? new Date(dateRange.fromDate).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -241,7 +289,7 @@ export default function DashboardPage() {
       doc.line(cutOffX - 5, 32, cutOffX + cutOffWidth + 5, 32)
 
       // Sort and format records
-      const sortedRecords = [...records].sort((a, b) => {
+      const sortedRecords = [...allRecords].sort((a, b) => {
         const dateA = new Date(a.date).getTime()
         const dateB = new Date(b.date).getTime()
         return dateA - dateB
@@ -559,7 +607,7 @@ export default function DashboardPage() {
     } finally {
       setIsExporting(false)
     }
-  }, [records, dateRange, username])
+  }, [records, dateRange, username, router])
 
   if (initialLoading) {
     return (
@@ -673,11 +721,24 @@ export default function DashboardPage() {
 
           <DateRangeFilter onChange={handleDateRangeChange} />
 
-          <AttendanceTable
-            records={records}
-            onDelete={handleDelete}
-            isLoading={isFilterLoading}
-          />
+          {initialLoading ? (
+            <div className="glass-morphism rounded-lg p-8">
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+                <span className="ml-3 text-blue-200">Loading records...</span>
+              </div>
+            </div>
+          ) : (
+            <AttendanceTable
+              records={records}
+              onDelete={handleDelete}
+              isLoading={isFilterLoading}
+              isPaginationLoading={isPaginationLoading}
+              currentPage={currentPage}
+              totalRecords={totalRecords}
+              onPageChange={handlePageChange}
+            />
+          )}
         </div>
       </main>
 
