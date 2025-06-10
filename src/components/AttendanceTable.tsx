@@ -4,6 +4,7 @@ import type { AttendanceRecord } from '@/lib/supabase'
 interface AttendanceTableProps {
   records?: AttendanceRecord[]
   onDelete: (id: string) => Promise<void>
+  onEdit: (record: AttendanceRecord) => void
   isLoading?: boolean
   isPaginationLoading?: boolean
   currentPage: number
@@ -14,6 +15,7 @@ interface AttendanceTableProps {
 export default function AttendanceTable({ 
   records = [],
   onDelete,
+  onEdit,
   isLoading = false,
   isPaginationLoading = false,
   currentPage,
@@ -71,31 +73,31 @@ export default function AttendanceTable({
 
   const TableContent = () => {
     if (isPaginationLoading) {
-      return (
-        <tbody className="divide-y divide-blue-500/20">
+    return (
+          <tbody className="divide-y divide-blue-500/20">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((_, index) => (
-            <tr key={index} className="animate-pulse">
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-24"></div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-16"></div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-20"></div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-32"></div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-24"></div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="h-4 bg-blue-500/20 rounded w-16"></div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
+              <tr key={index} className="animate-pulse">
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-24"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-16"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-20"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-32"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-24"></div>
+                </td>
+                <td className="px-6 py-4">
+                  <div className="h-4 bg-blue-500/20 rounded w-16"></div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
       )
     }
 
@@ -129,31 +131,31 @@ export default function AttendanceTable({
                   <p className="text-xs text-blue-300/40">
                     Created: {new Date(record.created_at || '').toLocaleString()}
                   </p>
-                </div>
+        </div>
               ) : (
-                <button 
-                  className="text-blue-400 hover:text-blue-300"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setSelectedRecord(record.id)
-                  }}
-                >
-                  View Details
-                </button>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(record)
+                    }}
+                    className="text-blue-400 hover:text-blue-300"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (confirm('Are you sure you want to delete this record?')) {
+                        onDelete(record.id)
+                      }
+                    }}
+                    className="text-red-400 hover:text-red-300"
+                  >
+                    Delete
+                  </button>
+                </div>
               )}
-            </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  if (confirm('Are you sure you want to delete this record?')) {
-                    onDelete(record.id)
-                  }
-                }}
-                className="text-red-400 hover:text-red-300"
-              >
-                Delete
-              </button>
             </td>
           </tr>
         ))}
@@ -206,17 +208,28 @@ export default function AttendanceTable({
             {new Date(record.date).toLocaleDateString('en-US', { weekday: 'long' })}
           </div>
         </div>
-        <button
-          onClick={(e) => {
-            e.stopPropagation()
-            if (confirm('Are you sure you want to delete this record?')) {
-              onDelete(record.id)
-            }
-          }}
-          className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-full border border-red-400/20 hover:bg-red-400/10 active:bg-red-400/20 transition-colors"
-        >
-          Delete
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit(record)
+            }}
+            className="text-blue-400 hover:text-blue-300 text-sm px-3 py-1.5 rounded-full border border-blue-400/20 hover:bg-blue-400/10 active:bg-blue-400/20 transition-colors"
+          >
+            Edit
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              if (confirm('Are you sure you want to delete this record?')) {
+                onDelete(record.id)
+              }
+            }}
+            className="text-red-400 hover:text-red-300 text-sm px-3 py-1.5 rounded-full border border-red-400/20 hover:bg-red-400/10 active:bg-red-400/20 transition-colors"
+          >
+            Delete
+          </button>
+        </div>
       </div>
       
       <div className="grid grid-cols-2 gap-3 bg-blue-900/20 p-3 rounded-lg">
@@ -374,15 +387,15 @@ export default function AttendanceTable({
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-400 mr-2"></div>
                   Loading...
-                </div>
-              ) : (
+                    </div>
+                  ) : (
                 'Previous'
               )}
             </button>
             <div className="px-4 py-2 text-sm text-blue-200 border border-blue-500/20 rounded-md">
               Page {currentPage} of {totalPages}
             </div>
-            <button
+                    <button 
               type="button"
               onClick={handleNext}
               disabled={currentPage >= totalPages || isPaginationLoading}
@@ -400,7 +413,7 @@ export default function AttendanceTable({
               ) : (
                 'Next'
               )}
-            </button>
+                  </button>
           </div>
         </div>
       </div>
@@ -421,9 +434,9 @@ export default function AttendanceTable({
             </div>
           ) : (
             <>
-              {sortedRecords.map(record => (
-                <MobileCard key={record.id} record={record} />
-              ))}
+          {sortedRecords.map(record => (
+            <MobileCard key={record.id} record={record} />
+          ))}
             </>
           )}
           

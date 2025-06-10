@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import toast, { Toaster } from 'react-hot-toast'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import { createAttendanceClient, getAttendanceRecords, addAttendanceRecord, deleteAttendanceRecord, type AttendanceRecord, type DateRange } from '@/lib/supabase'
+import { createAttendanceClient, getAttendanceRecords, addAttendanceRecord, deleteAttendanceRecord, updateAttendanceRecord, type AttendanceRecord, type DateRange } from '@/lib/supabase'
 import AttendanceForm from '@/components/AttendanceForm'
 import AttendanceTable from '@/components/AttendanceTable'
 import DateRangeFilter from '@/components/DateRangeFilter'
@@ -49,6 +49,8 @@ export default function DashboardPage() {
   const [isFilterLoading, setIsFilterLoading] = useState(false)
   const [isPaginationLoading, setIsPaginationLoading] = useState(false)
   const [isAddingNew, setIsAddingNew] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [editingRecord, setEditingRecord] = useState<AttendanceRecord | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [username, setUsername] = useState<string>('')
   const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange())
@@ -154,6 +156,11 @@ export default function DashboardPage() {
     }
   }, [currentPage, router, dateRange])
 
+  const handleEdit = useCallback((record: AttendanceRecord) => {
+    setEditingRecord(record)
+    setIsEditing(true)
+  }, [])
+
   const handleAddNew = useCallback(async (data: Partial<AttendanceRecord>) => {
     setIsSubmitting(true)
     try {
@@ -167,21 +174,38 @@ export default function DashboardPage() {
       }
 
       const client = createAttendanceClient(url, key)
-      const record = await addAttendanceRecord(client, {
-        ...data,
-        prepared_by: data.prepared_by || username
-      } as Omit<AttendanceRecord, 'id' | 'created_at' | 'updated_at'>)
       
-      setRecords(prev => Array.isArray(prev) ? [record, ...prev] : [record])
+      let record: AttendanceRecord
+      if (editingRecord) {
+        // Update existing record
+        record = await updateAttendanceRecord(client, editingRecord.id, {
+          ...data,
+          updated_at: new Date().toISOString()
+        })
+
+        setRecords(prev => prev.map(r => r.id === record.id ? record : r))
+        toast.success('Record updated successfully')
+      } else {
+        // Add new record
+        record = await addAttendanceRecord(client, {
+          ...data,
+          prepared_by: data.prepared_by || username
+        } as Omit<AttendanceRecord, 'id' | 'created_at' | 'updated_at'>)
+        
+        setRecords(prev => Array.isArray(prev) ? [record, ...prev] : [record])
+        toast.success('Record added successfully')
+      }
+
       setIsAddingNew(false)
-      toast.success('Record added successfully')
+      setIsEditing(false)
+      setEditingRecord(null)
     } catch (error: any) {
-      console.error('Add record error:', error)
-      toast.error(error.message || 'Failed to add record')
+      console.error('Save record error:', error)
+      toast.error(error.message || 'Failed to save record')
     } finally {
       setIsSubmitting(false)
     }
-  }, [router, username])
+  }, [router, username, editingRecord])
 
   const handleDelete = useCallback(async (id: string) => {
     try {
@@ -685,15 +709,21 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {isAddingNew && (
+        {(isAddingNew || isEditing) && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 overflow-y-auto">
             <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
               <div className="relative transform overflow-hidden glass-morphism rounded-lg text-left shadow-xl transition-all w-full max-w-3xl">
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-xl font-semibold text-blue-200">Add New Record</h2>
+                    <h2 className="text-xl font-semibold text-blue-200">
+                      {isEditing ? 'Edit Record' : 'Add New Record'}
+                    </h2>
                     <button
-                      onClick={() => setIsAddingNew(false)}
+                      onClick={() => {
+                        setIsAddingNew(false)
+                        setIsEditing(false)
+                        setEditingRecord(null)
+                      }}
                       className="text-blue-300/70 hover:text-blue-200 transition-colors"
                     >
                       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -703,8 +733,13 @@ export default function DashboardPage() {
                   </div>
                   <AttendanceForm
                     onSubmit={handleAddNew}
-                    onCancel={() => setIsAddingNew(false)}
+                    onCancel={() => {
+                      setIsAddingNew(false)
+                      setIsEditing(false)
+                      setEditingRecord(null)
+                    }}
                     isSubmitting={isSubmitting}
+                    initialData={editingRecord || undefined}
                   />
                 </div>
               </div>
@@ -712,7 +747,6 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* Records Section */}
         <div className="px-4 sm:px-0">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-blue-200">Attendance Records</h2>
@@ -734,6 +768,7 @@ export default function DashboardPage() {
             <AttendanceTable
               records={records}
               onDelete={handleDelete}
+              onEdit={handleEdit}
               isLoading={isFilterLoading}
               isPaginationLoading={isPaginationLoading}
               currentPage={currentPage}
