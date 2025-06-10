@@ -337,7 +337,7 @@ export default function DashboardPage() {
           day: 'numeric'
         })
 
-        // Handle special cases for SUNDAY and REST DAY
+        // Handle special cases for SUNDAY
         if (date.getDay() === 0) {
           return [
             { content: formattedDate, styles: { fontStyle: 'bold', valign: 'middle' } },
@@ -347,7 +347,9 @@ export default function DashboardPage() {
             { content: 'SUNDAY', styles: { fontStyle: 'bold', textColor: [180, 0, 0], valign: 'middle' } }
           ]
         }
-        if (date.getDay() === 6) {
+
+        // For Saturday, only mark as REST DAY if there's no data
+        if (date.getDay() === 6 && !group.records.length) {
           return [
             { content: formattedDate, styles: { fontStyle: 'bold', valign: 'middle' } },
             { content: '0.0', styles: { halign: 'center', valign: 'middle' } },
